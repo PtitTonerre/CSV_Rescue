@@ -1,6 +1,6 @@
-name,age,city
-Alice,25,Paris
-Bob,30,
-Charlie,,Marseille
-David,40,Lyon
-Emma,22,
+name;age;city
+Alice;25;Paris
+Bob;30;
+Charlie;;Marseille
+David;40;Lyon
+Emma;22;

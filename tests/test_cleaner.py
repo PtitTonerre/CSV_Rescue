@@ -1,7 +1,7 @@
 import pandas as pd
 
 from cleaner import remove_duplicates, remove_missing, split_missing, analyze_csv
-
+from csv_reader import read_csv_file
 
 def test_remove_duplicates():
     df = pd.DataFrame({
@@ -68,3 +68,14 @@ def test_analyze_empty_csv():
     assert result["missing_values"] == 0
 
     assert len(df) == 0
+
+def test_read_csv_windows1252():
+    content = "name;city\nAlice;Évry\n"
+    file_bytes = content.encode("cp1252")
+
+    df, encoding = read_csv_file(file_bytes, ";")
+
+    assert encoding == "Windows-1252"
+    assert len(df) == 1
+    assert df.loc[0, "city"] == "Évry"
+    

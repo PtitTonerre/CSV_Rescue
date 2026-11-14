@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 from cleaner import analyze_csv, remove_duplicates, remove_missing
 from cleaner import split_missing
+from csv_reader import read_csv_file
 
 def save_history():
     history = st.session_state.history
@@ -45,11 +46,12 @@ with st.expander("Options d'importation", expanded=False):
         separator = None
 
 if uploaded_file is not None:
+    file_bytes = uploaded_file.getvalue()
+
     try:
-        data = pd.read_csv(
-            uploaded_file,
-            sep=separator,
-            engine="python" if separator is None else "c"
+        data, detected_encoding = read_csv_file(
+            file_bytes,
+            separator
         )
     except pd.errors.EmptyDataError:
         st.error("Le fichier CSV est vide.")
@@ -65,6 +67,8 @@ if uploaded_file is not None:
         st.warning("Le fichier ne contient aucune ligne.")
         st.stop()
 
+    st.caption(f"Encodage utilisé : {detected_encoding}")
+
     file_bytes = uploaded_file.getvalue()
 
     import_settings = (
@@ -72,6 +76,12 @@ if uploaded_file is not None:
         separator_mode,
         separator
     )
+
+    if len(data.columns) == 1:
+        st.warning(
+            "Une seule colonne a été détectée. "
+            "Vérifiez que le séparateur est correct."
+        )
 
     if st.session_state.get("import_settings") != import_settings:
         st.session_state.import_settings = import_settings
@@ -117,6 +127,8 @@ if uploaded_file is not None:
             use_container_width=True,
             disabled=not missing_columns
         ):
+            save_history()
+
             st.session_state.cleaned_data = remove_missing(
                 st.session_state.cleaned_data,
                 missing_columns
@@ -137,6 +149,8 @@ if uploaded_file is not None:
 
     with col4:
         if st.button("Réinitialiser les données"):
+            save_history()
+
             st.session_state.cleaned_data = data.copy()
             st.session_state.edit_version += 1
 
@@ -175,6 +189,13 @@ if uploaded_file is not None:
             removed_rows,
             delta=f"{removed_percent:.1f}% du fichier",
             delta_color="off"
+        )
+
+    with st.expander("Aperçu du fichier après modifications", expanded=False):
+        st.dataframe(
+            st.session_state.cleaned_data,
+            height="auto",
+            width="stretch"
         )
 
     complete, incomplete = split_missing(st.session_state.cleaned_data)
@@ -241,9 +262,6 @@ if uploaded_file is not None:
                 ] = edited_incomplete
                 st.session_state.edit_version += 1
                 st.rerun()
-
-    st.subheader("Aperçu du fichier")
-    st.dataframe(st.session_state.cleaned_data)
 
     st.subheader("Comparaison avant / après")
 
