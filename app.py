@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+from io import BytesIO
 from cleaner import analyze_csv, remove_duplicates, remove_missing
 from cleaner import split_missing
 from csv_reader import read_csv_file
@@ -69,8 +70,6 @@ if uploaded_file is not None:
 
     st.caption(f"Encodage utilisé : {detected_encoding}")
 
-    file_bytes = uploaded_file.getvalue()
-
     import_settings = (
         file_bytes,
         separator_mode,
@@ -90,6 +89,8 @@ if uploaded_file is not None:
         st.session_state.edit_version = (
             st.session_state.get("edit_version", 0) + 1
         )
+        st.session_state.pop("duplicate_columns", None)
+        st.session_state.pop("missing_columns", None)
 
     all_columns = st.session_state.cleaned_data.columns.tolist()
     col1, col2, col3, col4 = st.columns([3.5,3.5,1.5,1.5])
@@ -154,15 +155,58 @@ if uploaded_file is not None:
             st.session_state.cleaned_data = data.copy()
             st.session_state.edit_version += 1
 
-    csv = st.session_state.cleaned_data.to_csv(
-        index=False
-    ).encode("utf-8-sig")
+    st.subheader("Exporter les données")
+
+    export_format = st.selectbox(
+        "Choisissez le format de téléchargement",
+        [
+            "CSV français (;)",
+            "CSV international (,)",
+            "Excel (.xlsx)",
+            "TSV (tabulation)"
+        ]
+    )
+
+    df = st.session_state.cleaned_data
+
+    if export_format == "Excel (.xlsx)":
+        buffer = BytesIO()
+        df.to_excel(buffer, index=False, engine="openpyxl")
+
+        export_data = buffer.getvalue()
+        extension = "xlsx"
+        mime = (
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        )
+
+    else:
+        separators = {
+            "CSV français (;)": ";",
+            "CSV international (,)": ",",
+            "TSV (tabulation)": "\t"
+        }
+
+        separator = separators[export_format]
+
+        export_data = df.to_csv(
+            index=False,
+            sep=separator
+        ).encode("utf-8-sig")
+
+        extension = "tsv" if separator == "\t" else "csv"
+        mime = (
+            "text/tab-separated-values"
+            if extension == "tsv"
+            else "text/csv"
+        )
 
     st.download_button(
-        label="Télécharger le CSV nettoyé",
-        data=csv,
-        file_name="cleaned_data.csv",
-        mime="text/csv"
+        label="Télécharger le fichier",
+        data=export_data,
+        file_name=f"cleaned_data.{extension}",
+        mime=mime,
+        use_container_width=True
     )
 
     original_stats = analyze_csv(data)
@@ -220,10 +264,13 @@ if uploaded_file is not None:
             key=f"all_{st.session_state.edit_version}"
         )
 
-        if st.button("Enregistrer", key="save_all"):
-            st.session_state.cleaned_data = edited_all.copy()
-            st.session_state.edit_version += 1
-            st.rerun()
+        if not edited_all.equals(st.session_state.cleaned_data):
+            if st.button("Enregistrer", key="save_all"):
+                save_history()
+
+                st.session_state.cleaned_data = edited_all.copy()
+                st.session_state.edit_version += 1
+                st.rerun()
 
     with tab3:
         st.subheader("Lignes complètes")
@@ -234,14 +281,17 @@ if uploaded_file is not None:
             key=f"complete_{st.session_state.edit_version}"
         )
 
-        if st.button("Enregistrer", key="save_complete"):
-            st.session_state.cleaned_data.loc[
-                edited_complete.index,
-                edited_complete.columns
-            ] = edited_complete
+        if not edited_complete.equals(complete):
+            if st.button("Enregistrer", key="save_complete"):
+                save_history()
 
-            st.session_state.edit_version += 1
-            st.rerun()
+                st.session_state.cleaned_data.loc[
+                    edited_complete.index,
+                    edited_complete.columns
+                ] = edited_complete
+
+                st.session_state.edit_version += 1
+                st.rerun()
 
     with tab4:
         st.subheader("Lignes incomplètes")
@@ -255,13 +305,17 @@ if uploaded_file is not None:
                 key=f"incomplete_{st.session_state.edit_version}"
             )
 
-            if st.button("Enregistrer", key="save_incomplete"):
-                st.session_state.cleaned_data.loc[
-                    edited_incomplete.index,
-                    edited_incomplete.columns
-                ] = edited_incomplete
-                st.session_state.edit_version += 1
-                st.rerun()
+            if not edited_incomplete.equals(incomplete):
+                if st.button("Enregistrer", key="save_incomplete"):
+                    save_history()
+
+                    st.session_state.cleaned_data.loc[
+                        edited_incomplete.index,
+                        edited_incomplete.columns
+                    ] = edited_incomplete
+
+                    st.session_state.edit_version += 1
+                    st.rerun()
 
     st.subheader("Comparaison avant / après")
 
@@ -277,3 +331,6 @@ if uploaded_file is not None:
         st.write("Lignes :", cleaned_stats["rows"])
         st.write("Doublons :", cleaned_stats["duplicates"])
         st.write("Valeurs manquantes :", cleaned_stats["missing_values"])
+
+else:
+        st.session_state.pop("import_settings", None)
