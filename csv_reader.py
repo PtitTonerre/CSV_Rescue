@@ -27,3 +27,9 @@ def read_csv_file(
             encoding="cp1252"
         )
         return df, "Windows-1252"
+
+def read_excel_file(file_bytes: bytes) -> pd.DataFrame:
+    return pd.read_excel(
+        BytesIO(file_bytes),
+        engine="openpyxl"
+    )

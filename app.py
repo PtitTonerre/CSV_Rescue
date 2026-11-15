@@ -3,7 +3,8 @@ import streamlit as st
 from io import BytesIO
 from cleaner import analyze_csv, remove_duplicates, remove_missing
 from cleaner import split_missing
-from csv_reader import read_csv_file
+from csv_reader import read_csv_file, read_excel_file
+from zipfile import BadZipFile
 
 def save_history():
     history = st.session_state.history
@@ -21,62 +22,84 @@ st.title("CSV Rescue")
 st.write("Importez un fichier CSV pour analyser ses données.")
 
 uploaded_file = st.file_uploader(
-    "Choisissez un fichier CSV",
-    type=["csv"]
+    "Importez votre fichier",
+    type=["csv", "xlsx"]
+)
+
+is_excel = (
+    uploaded_file is not None
+    and uploaded_file.name.lower().endswith(".xlsx")
 )
 
 with st.expander("Options d'importation", expanded=False):
-    separator_mode = st.radio(
-        "Détection du séparateur",
-        ["Automatique", "Manuel"],
-        horizontal=True
-    )
-
-    if separator_mode == "Manuel":
-        separator = st.selectbox(
-            "Séparateur",
-            options=[",", ";", "\t", "|"],
-            format_func=lambda x: {
-                ",": "Virgule (,)",
-                ";": "Point-virgule (;)",
-                "\t": "Tabulation",
-                "|": "Barre verticale (|)"
-            }[x]
-        )
-    else:
+    if is_excel:
+        st.info("Fichier Excel détecté : la première feuille sera importée.")
+        separator_mode = "Excel"
         separator = None
+    else:
+        separator_mode = st.radio(
+            "Détection du séparateur",
+            ["Automatique", "Manuel"],
+            horizontal=True
+        )
+
+        if separator_mode == "Manuel":
+            separator = st.selectbox(
+                "Séparateur",
+                options=[",", ";", "\t", "|"],
+                format_func=lambda x: {
+                    ",": "Virgule (,)",
+                    ";": "Point-virgule (;)",
+                    "\t": "Tabulation",
+                    "|": "Barre verticale (|)"
+                }[x]
+            )
+        else:
+            separator = None
 
 if uploaded_file is not None:
     file_bytes = uploaded_file.getvalue()
 
     try:
-        data, detected_encoding = read_csv_file(
-            file_bytes,
-            separator
-        )
+        if is_excel:
+            data = read_excel_file(file_bytes)
+            detected_encoding = None
+        else:
+            data, detected_encoding = read_csv_file(
+                file_bytes,
+                separator
+            )
+
     except pd.errors.EmptyDataError:
-        st.error("Le fichier CSV est vide.")
+        st.error("Le fichier est vide.")
         st.stop()
     except pd.errors.ParserError:
-        st.error("Le fichier CSV est mal formaté.")
+        st.error("Le fichier est mal formaté.")
         st.stop()
     except UnicodeDecodeError:
         st.error("L'encodage du fichier n'est pas reconnu.")
+        st.stop()
+    except (BadZipFile, ValueError):
+        st.error("Impossible de lire le fichier Excel.")
         st.stop()
 
     if data.empty:
         st.warning("Le fichier ne contient aucune ligne.")
         st.stop()
 
-    st.caption(f"Encodage utilisé : {detected_encoding}")
+    if is_excel:
+        st.caption("Format importé : Excel (.xlsx)")
+    else:
+        st.caption(f"Encodage utilisé : {detected_encoding}")
 
     import_settings = (
         file_bytes,
+        uploaded_file.name,
         separator_mode,
         separator
     )
 
-    if len(data.columns) == 1:
+    if not is_excel and len(data.columns) == 1:
         st.warning(
             "Une seule colonne a été détectée. "
             "Vérifiez que le séparateur est correct."
@@ -138,8 +161,9 @@ if uploaded_file is not None:
 
     with col3:
         if st.button(
-            "Annuler la dernière modification",
-            disabled=not st.session_state.history
+            "Annuler",
+            disabled=not st.session_state.history,
+            use_container_width=True
         ):
             st.session_state.cleaned_data = (
                 st.session_state.history.pop()
@@ -149,7 +173,10 @@ if uploaded_file is not None:
             st.rerun()
 
     with col4:
-        if st.button("Réinitialiser les données"):
+        if st.button(
+            "Réinitialiser les données",
+            use_container_width=True
+        ):
             save_history()
 
             st.session_state.cleaned_data = data.copy()
@@ -187,14 +214,14 @@ if uploaded_file is not None:
             "TSV (tabulation)": "\t"
         }
 
-        separator = separators[export_format]
+        export_separator = separators[export_format]
 
         export_data = df.to_csv(
             index=False,
-            sep=separator
+            sep=export_separator
         ).encode("utf-8-sig")
 
-        extension = "tsv" if separator == "\t" else "csv"
+        extension = "tsv" if export_separator == "\t" else "csv"
         mime = (
             "text/tab-separated-values"
             if extension == "tsv"
@@ -232,7 +259,8 @@ if uploaded_file is not None:
             "Lignes supprimées",
             removed_rows,
             delta=f"{removed_percent:.1f}% du fichier",
-            delta_color="off"
+            delta_color="off",
+            delta_arrow="off"
         )
 
     with st.expander("Aperçu du fichier après modifications", expanded=False):
