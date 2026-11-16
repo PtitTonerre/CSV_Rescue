@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def analyze_csv(df: pd.DataFrame) -> dict:
     return {
         "rows": len(df),

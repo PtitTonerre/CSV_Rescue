@@ -1,6 +1,8 @@
-from csv_reader import read_csv_file
 import pytest
 import pandas as pd
+
+from core import read_csv_file
+
 
 def test_read_csv_windows1252():
     content = "name;city\nAlice;Évry\n"

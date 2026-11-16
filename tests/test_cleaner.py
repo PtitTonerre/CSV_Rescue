@@ -1,6 +1,13 @@
+import pytest
 import pandas as pd
 
-from cleaner import remove_duplicates, remove_missing, split_missing, analyze_csv
+from core import (
+    analyze_csv,
+    remove_duplicates,
+    remove_missing,
+    split_missing
+)
+
 
 def test_remove_duplicates():
     df = pd.DataFrame({

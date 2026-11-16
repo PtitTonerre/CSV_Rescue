@@ -1,4 +1,3 @@
-
 from io import BytesIO
 import pandas as pd
 
@@ -33,3 +32,20 @@ def read_excel_file(file_bytes: bytes) -> pd.DataFrame:
         BytesIO(file_bytes),
         engine="openpyxl"
     )
+
+def read_file(
+    filename: str,
+    file_bytes: bytes,
+    separator: str | None = None
+) -> tuple[pd.DataFrame, str | None]:
+
+    filename = filename.lower()
+
+    if filename.endswith(".xlsx"):
+        data = read_excel_file(file_bytes)
+        return data, None
+
+    if filename.endswith(".csv"):
+        return read_csv_file(file_bytes, separator)
+
+    raise ValueError("Format de fichier non supporté")
