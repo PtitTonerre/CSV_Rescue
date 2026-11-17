@@ -18,8 +18,8 @@ def export_data(
         )
 
     separators = {
-        "CSV français (;)": ";",
-        "CSV international (,)": ",",
+        "International CSV (,)": ",",
+        "French CSV (;)": ";",
         "TSV (tabulation)": "\t"
     }
 

@@ -7,7 +7,7 @@ from core import read_file
 
 def render_import() -> pd.DataFrame | None:
     uploaded_file = st.file_uploader(
-        "Importez votre fichier",
+        "Upload your file",
         type=["csv", "xlsx"]
     )
 
@@ -16,30 +16,30 @@ def render_import() -> pd.DataFrame | None:
         and uploaded_file.name.lower().endswith(".xlsx")
     )
 
-    with st.expander("Options d'importation", expanded=False):
+    with st.expander("Import options", expanded=False):
         if is_excel:
             st.info(
-                "Fichier Excel détecté : "
-                "la première feuille sera importée."
+                "Excel file detected: "
+                "only the first worksheet will be imported."
             )
             separator_mode = "Excel"
             separator = None
         else:
             separator_mode = st.radio(
-                "Détection du séparateur",
-                ["Automatique", "Manuel"],
+                "Delimiter detection",
+                ["Automatic", "Manual"],
                 horizontal=True
             )
 
-            if separator_mode == "Manuel":
+            if separator_mode == "Manual":
                 separator = st.selectbox(
-                    "Séparateur",
+                    "Delimiter",
                     options=[",", ";", "\t", "|"],
                     format_func=lambda x: {
-                        ",": "Virgule (,)",
-                        ";": "Point-virgule (;)",
-                        "\t": "Tabulation",
-                        "|": "Barre verticale (|)"
+                        ",": "Comma (,)",
+                        ";": "Semicolon (;)",
+                        "\t": "Tab",
+                        "|": "Pipe (|)"
                     }[x]
                 )
             else:
@@ -59,34 +59,34 @@ def render_import() -> pd.DataFrame | None:
         )
 
     except pd.errors.EmptyDataError:
-        st.error("Le fichier est vide.")
+        st.error("The file is empty.")
         st.stop()
 
     except pd.errors.ParserError:
-        st.error("Le fichier est mal formaté.")
+        st.error("The file is malformed.")
         st.stop()
 
     except UnicodeDecodeError:
-        st.error("L'encodage du fichier n'est pas reconnu.")
+        st.error("The file encoding is not supported.")
         st.stop()
 
     except (BadZipFile, ValueError):
-        st.error("Impossible de lire le fichier.")
+        st.error("Unable to read the file.")
         st.stop()
 
     if data.empty:
-        st.warning("Le fichier ne contient aucune ligne.")
+        st.warning("The file contains no data rows.")
         st.stop()
 
     if is_excel:
-        st.caption("Format importé : Excel (.xlsx)")
+        st.caption("Imported format: Excel (.xlsx)")
     else:
-        st.caption(f"Encodage utilisé : {detected_encoding}")
+        st.caption(f"Detected encoding: {detected_encoding}")
 
     if not is_excel and len(data.columns) == 1:
         st.warning(
-            "Une seule colonne a été détectée. "
-            "Vérifiez que le séparateur est correct."
+            "Only one column was detected. "
+            "Please check that the delimiter is correct."
         )
 
     import_settings = (

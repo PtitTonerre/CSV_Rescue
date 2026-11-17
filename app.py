@@ -19,8 +19,8 @@ def main() -> None:
     st.title("CSV Rescue")
 
     st.write(
-        "Importez un fichier CSV ou Excel "
-        "pour analyser et nettoyer ses données."
+        "Import a CSV or Excel file "
+        "to clean, edit and export your data"
     )
 
     data = render_import()

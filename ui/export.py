@@ -4,13 +4,13 @@ from core import export_data
 
 
 def render_export() -> None:
-    st.subheader("Exporter les données")
+    st.subheader("Export data")
 
     export_format = st.selectbox(
-        "Choisissez le format de téléchargement",
+        "Choose export format",
         [
-            "CSV français (;)",
-            "CSV international (,)",
+            "international CSV (,)",
+            "French CSV (;)",
             "Excel (.xlsx)",
             "TSV (tabulation)"
         ]
@@ -22,7 +22,7 @@ def render_export() -> None:
     )
 
     st.download_button(
-        label="Télécharger le fichier",
+        label="Download file",
         data=export_content,
         file_name=f"cleaned_data.{extension}",
         mime=mime,

@@ -12,14 +12,14 @@ def render_cleaning(data: pd.DataFrame) -> None:
 
     with col1:
         duplicate_columns = st.multiselect(
-            "Colonnes à comparer pour les doublons",
+            "Columns to check for duplicates",
             options=all_columns,
             default=all_columns,
             key="duplicate_columns"
         )
 
         if st.button(
-            "Supprimer les doublons",
+            "Remove duplicates",
             use_container_width=True,
             disabled=not duplicate_columns
         ):
@@ -35,14 +35,14 @@ def render_cleaning(data: pd.DataFrame) -> None:
 
     with col2:
         missing_columns = st.multiselect(
-            "Colonnes à vérifier pour les valeurs manquantes",
+            "Columns to check for missing data",
             options=all_columns,
             default=all_columns,
             key="missing_columns"
         )
 
         if st.button(
-            "Supprimer les valeurs manquantes",
+            "Remove incomplete rows",
             use_container_width=True,
             disabled=not missing_columns
         ):
@@ -58,7 +58,7 @@ def render_cleaning(data: pd.DataFrame) -> None:
 
     with col3:
         if st.button(
-            "Annuler",
+            "Undo",
             disabled=not st.session_state.history,
             use_container_width=True
         ):
@@ -67,7 +67,7 @@ def render_cleaning(data: pd.DataFrame) -> None:
 
     with col4:
         if st.button(
-            "Réinitialiser les données",
+            "Restore original data",
             use_container_width=True
         ):
             save_history()

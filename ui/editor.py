@@ -34,20 +34,20 @@ def render_editor(data: pd.DataFrame) -> None:
     }
     </style>
     """)
-    
+
     tab1, tab2, tab3, tab4 = st.tabs([
-        "Données originales",
-        "Données finales",
-        "Lignes complètes",
-        "Lignes incomplètes"
+        "Original data",
+        "Final data",
+        "Complete rows",
+        "Incomplete rows"
     ])
 
     with tab1:
-        st.subheader("Données originales")
+        st.subheader("Original data")
         st.dataframe(data, width="stretch")
 
     with tab2:
-        st.subheader("Données finales")
+        st.subheader("Current data")
 
         edited_all = st.data_editor(
             st.session_state.cleaned_data,
@@ -59,7 +59,7 @@ def render_editor(data: pd.DataFrame) -> None:
         if not edited_all.equals(
             st.session_state.cleaned_data
         ):
-            if st.button("Enregistrer", key="save_all"):
+            if st.button("Save changes", key="save_all"):
                 save_history()
 
                 st.session_state.cleaned_data = (
@@ -70,32 +70,36 @@ def render_editor(data: pd.DataFrame) -> None:
                 st.rerun()
 
     with tab3:
-        st.subheader("Lignes complètes")
+        st.subheader("Complete rows")
 
-        edited_complete = st.data_editor(
-            complete,
-            num_rows="fixed",
-            width="stretch",
-            key=f"complete_{st.session_state.edit_version}"
-        )
+        if complete.empty:
+            st.success("No complete rows")
 
-        if not edited_complete.equals(complete):
-            if st.button("Enregistrer", key="save_complete"):
-                save_history()
+        else:
+            edited_complete = st.data_editor(
+                complete,
+                num_rows="fixed",
+                width="stretch",
+                key=f"complete_{st.session_state.edit_version}"
+            )
 
-                st.session_state.cleaned_data.loc[
-                    edited_complete.index,
-                    edited_complete.columns
-                ] = edited_complete
+            if not edited_complete.equals(complete):
+                if st.button("Save changes", key="save_complete"):
+                    save_history()
 
-                st.session_state.edit_version += 1
-                st.rerun()
+                    st.session_state.cleaned_data.loc[
+                        edited_complete.index,
+                        edited_complete.columns
+                    ] = edited_complete
+
+                    st.session_state.edit_version += 1
+                    st.rerun()
 
     with tab4:
-        st.subheader("Lignes incomplètes")
+        st.subheader("Incomplete rows")
 
         if incomplete.empty:
-            st.success("Aucune ligne incomplète !")
+            st.success("No incomplete rows")
 
         else:
             edited_incomplete = st.data_editor(
@@ -107,7 +111,7 @@ def render_editor(data: pd.DataFrame) -> None:
 
             if not edited_incomplete.equals(incomplete):
                 if st.button(
-                    "Enregistrer",
+                    "Save changes",
                     key="save_incomplete"
                 ):
                     save_history()
