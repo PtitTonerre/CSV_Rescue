@@ -5,6 +5,7 @@ from core import split_missing
 from state import save_history
 
 
+@st.fragment
 def render_editor(data: pd.DataFrame) -> None:
     complete, incomplete = split_missing(
         st.session_state.cleaned_data

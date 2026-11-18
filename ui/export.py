@@ -26,5 +26,6 @@ def render_export() -> None:
         data=export_content,
         file_name=f"cleaned_data.{extension}",
         mime=mime,
-        use_container_width=True
+        use_container_width=True,
+        on_click="ignore"
     )
