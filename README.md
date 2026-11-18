@@ -6,7 +6,7 @@ CSV Rescue is a browser-based data-cleaning tool built with **Python, Pandas, an
 
 The interface is designed for two workflows: **quick cleanup and export** near the top of the page, or **detailed row-by-row editing** further down.
 
-**[Source code](https://github.com/PtitTonnerre/CSV_Rescue)** · **Live demo:** Coming soon (add the Streamlit URL after deployment)
+**[Source code](https://github.com/PtitTonnerre/CSV_Rescue)** · **Live demo:** https://csvrescue.streamlit.app
 
 ## Preview
 
