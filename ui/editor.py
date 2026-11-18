@@ -37,7 +37,7 @@ def render_editor(data: pd.DataFrame) -> None:
 
     tab1, tab2, tab3, tab4 = st.tabs([
         "Original data",
-        "Final data",
+        "Current data",
         "Complete rows",
         "Incomplete rows"
     ])

@@ -7,9 +7,9 @@ def render_export() -> None:
     st.subheader("Export data")
 
     export_format = st.selectbox(
-        "Choose export format",
+        "Export format",
         [
-            "international CSV (,)",
+            "International CSV (,)",
             "French CSV (;)",
             "Excel (.xlsx)",
             "TSV (tabulation)"
