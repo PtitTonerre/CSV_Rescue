@@ -66,8 +66,11 @@ def render_cleaning(data: pd.DataFrame) -> None:
             st.rerun()
 
     with col4:
+        is_original = st.session_state.cleaned_data.equals(data)
+
         if st.button(
             "Restore original data",
+            disabled=is_original,
             use_container_width=True
         ):
             save_history()
